@@ -1,6 +1,10 @@
 #include <iostream>
+#include <stdio.h>
 #include <vector>
 #include <fcntl.h>
+#include <cstring>
+#include <cstdio>
+#include <sstream>
 #include "servo.h"
 
 using namespace std;
@@ -17,6 +21,9 @@ Servo::Servo(int id, int serial_fd)
 
 void Servo::move(float angle)
 {
+	if(angle<21||angle>1002)
+		throw "Position out of range";
+
 	// convert move command into m/lsb
 	int LSB = (int)angle&0x00FF;
 	int MSB = ((int)angle&0xFF00)>>8;
@@ -28,9 +35,11 @@ void Servo::move(float angle)
 float Servo::getPosition(void)
 {
 	vector<int> posData;
-	posData = this->RAMread(0x3C, 0x02); // read 2 bytes from RAM address 60 (0x3C, absolute position)	
-	// convert two bytes of position data into float
-	return posData[0];
+	posData = this->RAMread(0x3A, 0x02); // read 2 bytes from RAM address 60 (0x3C, absolute position)	
+
+	float offset = 24598.0;
+	float to_angle = 0.325; // factor to convert from reading to servo angle
+	return ((float)(posData[0] + (posData[1]<<8))-offset)*to_angle;
 }
 
 
@@ -51,7 +60,7 @@ void Servo::RAMwrite(vector<int> data)
 	cmd.pktData = data; // first value is address, remainder is data
 	cmd.packetSize = 7 + data.size(); // size of header + data to write
 	cmd.command = 0x03; // RAM_WRITE command number
-	
+
 	this->pktCreate();
 	this->send();
 }
@@ -122,22 +131,31 @@ int Servo::chk2(void)
 
 void Servo::send(void)
 {
-	int* buf = &cmdPacket[0];
 	int len = cmdPacket.size();
-	cout << "Command packet sent: " << endl;
-	cout << "Length: " << len << endl;
-	for(int i = 0; i<len; i++)
-		cout << hex << buf[i] << dec << endl;
-	write(fd, buf, len); // send the command over the serial line
-	cout << "Write returns: " << err << endl;
+	int err;
+
+	char buf[len];
+	for(int i = 0; i<len; i++){
+		buf[i] = (char)cmdPacket[i];
+	}
+
+	err = write(fd, &buf, len); // send the command over the serial line
 }
 
 
 vector<int> Servo::receive(int nBytes)
 {
-	cout << "Received " << nBytes << " of data." << endl;
+	int len = 12 + nBytes; // command echo + return data + status error
+	vector<int> ack(len);
+	char c;
+	for(int i = 0; i<len; i++){
+		read(fd,&c,sizeof(c));
+		ack[i] = (int)c;
+	}
 
-	vector<int> fake_return(1);
-	fake_return[0] = -1;
-	return fake_return;
+	vector<int> data;
+	for(int i = 0; i<nBytes; i++)
+		data.push_back(ack[9+i]);
+
+	return data;
 }
