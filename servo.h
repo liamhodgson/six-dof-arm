@@ -1,5 +1,5 @@
-#ifndef SERVO_H
-#define SERVO_H
+#ifndef _SERVO_H_
+#define _SERVO_H_
 
 #include <vector>
 
@@ -16,7 +16,10 @@ class Servo
 		void move(float angle);
 		// returns the current calibrated angle of the servo
 		float getPosition(void);
-
+		// sends specified data to specified address
+		std::vector<int> readAddr(int addr, int nBytes);
+		// write data to specified address
+		void writeAddr(int addr, std::vector<int> data);
 	private:
 		/**
 		 ** private variables
@@ -53,7 +56,7 @@ class Servo
 		// reads nbytes from RAM address
 		std::vector<int> RAMread(int addr, int nBytes);
 		// writes data array to RAM address
-		void RAMwrite(std::vector<int> data);
+		void RAMwrite(int addr, std::vector<int> data);
 		// sends command to move servo (in future add SET and movetime)
 		void I_JOG(int MSB, int LSB);
 		// sends command to move servo

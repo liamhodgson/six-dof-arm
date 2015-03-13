@@ -43,26 +43,40 @@ float Servo::getPosition(void)
 }
 
 
+vector<int> Servo::readAddr(int addr, int nBytes)
+{
+	return this->RAMread(addr, nBytes);
+}
+
+void Servo::writeAddr(int addr, vector<int> data)
+{
+	this->RAMwrite(addr, data);
+}
+
 void Servo::torqueON(void)
 {
 	vector<int> tmp;
-	tmp.push_back(0x34); // address of torque control in RAM
-	tmp.push_back(0x01);
 	tmp.push_back(0x60);
 	
-	this->RAMwrite(tmp);
+	this->RAMwrite(0x34, tmp);
 }
 
 
-void Servo::RAMwrite(vector<int> data)
+void Servo::RAMwrite(int addr, vector<int> data)
 {
 	cmd.pktData.clear();
-	cmd.pktData = data; // first value is address, remainder is data
-	cmd.packetSize = 7 + data.size(); // size of header + data to write
+	cmd.pktData.push_back(addr); // first value is address
+	cmd.pktData.push_back(data.size()); // number of bytes to be written
+	cmd.pktData.insert(cmd.pktData.end(),data.begin(),data.end()); // append data to be sent to end of packet
+	cmd.packetSize = 7 + 2 + data.size(); // size of header + address/data length + data to write
 	cmd.command = 0x03; // RAM_WRITE command number
 
 	this->pktCreate();
 	this->send();
+
+	// if the servo id is changed, need to update that variable
+	if(addr==0x00)
+		cmd.servoID = data[0];
 }
 
 
@@ -71,7 +85,7 @@ vector<int> Servo::RAMread(int addr, int nBytes)
 	cmd.pktData.clear();
 	cmd.pktData.push_back(addr);
 	cmd.pktData.push_back(nBytes);
-	cmd.packetSize = 9; // size of header (7) + data to write (2)
+	cmd.packetSize = 9; // size of header (7) + number bytes to read (1) + address (1)
 	cmd.command = 0x04; // RAM_READ command number
 	
 	this->pktCreate();
@@ -132,14 +146,16 @@ int Servo::chk2(void)
 void Servo::send(void)
 {
 	int len = cmdPacket.size();
-	int err;
 
 	char buf[len];
+	cout << "sent: ";
 	for(int i = 0; i<len; i++){
 		buf[i] = (char)cmdPacket[i];
+		cout << hex << (int)buf[i] << " ";
 	}
+	cout << dec << endl;
 
-	err = write(fd, &buf, len); // send the command over the serial line
+	write(fd, &buf, len); // send the command over the serial line
 }
 
 

@@ -1,4 +1,13 @@
 #include <iostream>
+#include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <time.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <string.h>
 #include "serial.h"
 
 using namespace std;
@@ -31,7 +40,7 @@ ServoSerial::ServoSerial(void)
     tcsetattr(fd,TCSANOW,&uart4); // uses uart4 struct to set parameters of terminal fd (TCSANOW = immediately)
 }
 
-int ServoSerial::port(void)
+int ServoSerial::access(void)
 {
     return fd;
 }
