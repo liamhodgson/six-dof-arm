@@ -19,14 +19,14 @@ Servo::Servo(int id, int serial_fd)
 }
 
 
-void Servo::move(float angle)
+void Servo::move(float goal)
 {
-	if(angle<21||angle>1002)
+	if(goal<21||goal>1002)
 		throw "Position out of range";
 
 	// convert move command into m/lsb
-	int LSB = (int)angle&0x00FF;
-	int MSB = ((int)angle&0xFF00)>>8;
+	int LSB = (int)goal&0x00FF;
+	int MSB = ((int)goal&0xFF00)>>8;
 
 	// send command to servo
 	this->I_JOG(MSB, LSB);
@@ -111,6 +111,22 @@ void Servo::I_JOG(int MSB, int LSB)
 	this->send();
 }
 
+std::vector<int> Servo::makeI_JOGtag(int goal)
+{
+	// generates an I_JOG tag to move servo
+	// convert move command into m/lsb
+	int LSB = (int)goal&0x00FF;
+	int MSB = ((int)goal&0xFF00)>>8;
+
+	vector<int> tag;
+	tag.push_back(LSB); // position lsb
+	tag.push_back(MSB); // position msb
+	tag.push_back(0x04); // SET value; sets position control and LED; fixed for now
+	tag.push_back(cmd.servoID); // id of this servo
+	tag.push_back(0x3C); // playtime (in multiples of 11.2ms); fixed for now
+
+	return tag;
+}
 
 void Servo::pktCreate(void)
 {
@@ -148,16 +164,12 @@ void Servo::send(void)
 	int len = cmdPacket.size();
 
 	char buf[len];
-	cout << "sent: ";
 	for(int i = 0; i<len; i++){
 		buf[i] = (char)cmdPacket[i];
-		cout << hex << (int)buf[i] << " ";
 	}
-	cout << dec << endl;
 
 	write(fd, &buf, len); // send the command over the serial line
 }
-
 
 vector<int> Servo::receive(int nBytes)
 {

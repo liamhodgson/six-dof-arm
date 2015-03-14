@@ -9,12 +9,11 @@ class Manipulator : private Servo
 {
 	public:
 		Manipulator(std::vector<int> ids); // constructor
-		move(std::vector<int> goals); // send move commands to all servos
+		moveAll(std::vector<int> goals); // send move commands to all servos
 		~Manipulator(void); // destructor
 	private:
 		int nServos; // the number of servos that make up the manipulator
 		std::vector<Servo*> actuators; // vector of pointers to Servo objects
-
 };
 
 #endif

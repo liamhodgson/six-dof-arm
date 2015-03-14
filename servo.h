@@ -20,10 +20,18 @@ class Servo
 		std::vector<int> readAddr(int addr, int nBytes);
 		// write data to specified address
 		void writeAddr(int addr, std::vector<int> data);
-	private:
+	
+	protected:
 		/**
-		 ** private variables
+		 ** command packet specific member functions
 		 **/
+		 
+		void send(void);
+		std::vector<int> receive(int nBytes);
+		void pktCreate(void);
+
+		int chk1(void);
+		int chk2(void);
 
 		// struct to store data to be sent to servo
 		struct packet_template{
@@ -39,16 +47,13 @@ class Servo
 
 		// complete command packet ready to be sent to servo
 		std::vector<int> cmdPacket;
+
+	private:
 		// stores the servo's min and max position
 		char positionLimit[2];
 		// file descriptor for accessing serial communication
 		int fd;
 
-
-		/**
-		 ** Low-level servo command member functions
-		 **/
-		
 		// returns nbytes of data from EEP address
 		char* EEPread(char address, char nbytes);
 		// writes data array to EEP address
@@ -59,31 +64,17 @@ class Servo
 		void RAMwrite(int addr, std::vector<int> data);
 		// sends command to move servo (in future add SET and movetime)
 		void I_JOG(int MSB, int LSB);
+		// returns I_JOG tag for goal position
+		std::vector<int> makeI_JOGtag(int goal);
 		// sends command to move servo
 		void S_JOG(char MSB, char LSB, char SET, char movetime);
 		// requests info from servo
 		char* STAT(void);
 
-
-		/**
-		 ** specific implementation of low-level servo commands
-		 **/
-
 		// turn on torque (needs to be called for move() to work!)
 		void torqueON(void);
 		// set the position that the servo is currently at to zeroAngle 
 		void calibrate(float zeroAngle);  
-
-
-		/**
-		 ** command packet specific member functions
-		 **/
-		 
-		void pktCreate(void);
-		int chk1(void);
-		int chk2(void);
-		void send(void);
-		std::vector<int> receive(int nBytes);
 
 		/* General order of calls: servo object calls public member function. This calls
 		 * a low-level servo command (sets data to be sent in cmd struct), then calls 

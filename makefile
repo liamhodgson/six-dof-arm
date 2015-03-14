@@ -1,8 +1,8 @@
-all: main.o servo.o serial.o
-	g++ main.o servo.o serial.o -o run
+all: moveOne.o servo.o serial.o
+	g++ moveOne.o servo.o serial.o -o run
 
-main: main.cpp
-	g++ -c main.cpp
+moveOne: moveOne.cpp
+	g++ -c moveOne.cpp
 
 servo: servo.cpp
 	g++ -c servo.cpp
