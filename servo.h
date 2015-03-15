@@ -10,6 +10,8 @@ class Servo
 		 * Each servo needs to have its id manually and individually assigned before
 		 * trying to control it using this servo class.
 		 */
+		// default constructor
+		Servo(void);
 		// constructor
 		Servo(int id, int serial_fd);
 		// move servo to specified angle. return command array
@@ -21,6 +23,8 @@ class Servo
 		// write data to specified address
 		void writeAddr(int addr, std::vector<int> data);
 	
+		// returns I_JOG tag for goal position
+		std::vector<int> makeI_JOGtag(int goal);
 	protected:
 		/**
 		 ** command packet specific member functions
@@ -30,6 +34,9 @@ class Servo
 		std::vector<int> receive(int nBytes);
 		void pktCreate(void);
 
+		// file descriptor for accessing serial communication
+		int fd;
+		
 		int chk1(void);
 		int chk2(void);
 
@@ -48,11 +55,10 @@ class Servo
 		// complete command packet ready to be sent to servo
 		std::vector<int> cmdPacket;
 
+
 	private:
 		// stores the servo's min and max position
 		char positionLimit[2];
-		// file descriptor for accessing serial communication
-		int fd;
 
 		// returns nbytes of data from EEP address
 		char* EEPread(char address, char nbytes);
@@ -64,8 +70,6 @@ class Servo
 		void RAMwrite(int addr, std::vector<int> data);
 		// sends command to move servo (in future add SET and movetime)
 		void I_JOG(int MSB, int LSB);
-		// returns I_JOG tag for goal position
-		std::vector<int> makeI_JOGtag(int goal);
 		// sends command to move servo
 		void S_JOG(char MSB, char LSB, char SET, char movetime);
 		// requests info from servo

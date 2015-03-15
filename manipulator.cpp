@@ -3,17 +3,21 @@
 #include "servo.h"
 #include "manipulator.h"
 
-Manipulator::Manipulator(std::vector<int> ids)
+using namespace std;
+
+Manipulator::Manipulator(vector<int> ids, int newfd)
 {
 	this->nServos = ids.size(); // initialize number of servos in manipulator
 	for(int i = 0; i<nServos; i++)
-		this->actuators[i] = new Servo(ids[i]); // create a new servo object for each id
+		this->actuators.push_back(new Servo(ids[i], fd)); // create a new servo object for each id
 
-	cmdmservoID = 0xFE; // manipulator object sends commands to all servos
+	cmd.servoID = 0xFE; // manipulator object sends commands to all servos
+
+	fd = newfd;
 }
 
 // sends specified command to each servo, using I_JOG tag
-Manipulator::moveAll(std::vector<int> goals)
+void Manipulator::moveAll(vector<int> goals)
 {
 	if(goals.size() != nServos)
 		throw "Goal command required for each servo";
@@ -32,22 +36,10 @@ Manipulator::moveAll(std::vector<int> goals)
 	cmd.command = 0x05; // I_JOG command
 	cmd.pktData = cmdData;
 
+	cout << "in moveAll, fd = " << fd << endl;
+
 	this->pktCreate();
 	this->send();	
-}
-
-void Manipulator::send(void)
-{
-	int len = cmdPacket.size();
-
-	char buf[len];
-	for(int i = 0; i<len; i++){
-		buf[i] = (char)cmdPacket[i];
-		cout << hex << (int)buf[i] << " ";
-	}
-	cout << dec << endl;
-
-	write(fd, &buf, len); // send the command over the serial line
 }
 
 Manipulator::~Manipulator(void)

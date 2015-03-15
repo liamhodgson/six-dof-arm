@@ -9,6 +9,8 @@
 
 using namespace std;
 
+Servo::Servo(void){}
+
 Servo::Servo(int id, int serial_fd)
 {
 	cmd.servoID = id;
@@ -17,7 +19,6 @@ Servo::Servo(int id, int serial_fd)
 	// set torque policy to on, so that servo will actually move
 	this->torqueON();
 }
-
 
 void Servo::move(float goal)
 {
@@ -166,8 +167,11 @@ void Servo::send(void)
 	char buf[len];
 	for(int i = 0; i<len; i++){
 		buf[i] = (char)cmdPacket[i];
+		cout << hex << (int)buf[i] << " ";
 	}
+	cout << dec << endl;
 
+	cout << "sending w fd: " << fd << endl;
 	write(fd, &buf, len); // send the command over the serial line
 }
 
